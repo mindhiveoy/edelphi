@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`QueryComment Renders the comment 1`] = `ShallowWrapper {}`;

@@ -4,15 +4,14 @@ import { QueryPageStatistics } from "../types";
  * Utilities for calculating statistics
  */
 export default class StatisticsUtils {
-
   /**
    * Calculates statistics for array of values
-   * 
+   *
    * @param values values
    * @returns statistics
    */
   public static getStatistics(values: number[]): QueryPageStatistics {
-    const sorted = (values || []).sort((a, b) => a - b);
+    const sorted = (values || []).sort((a, b) => a - b);
 
     return {
       answerCount: values.length,
@@ -24,7 +23,7 @@ export default class StatisticsUtils {
 
   /**
    * Returns quantile
-   * 
+   *
    * @param sorted sorted array of values
    * @param quantile quantile index
    * @return quantile
@@ -38,11 +37,10 @@ export default class StatisticsUtils {
     const base = Math.floor(index);
 
     const rest = index - base;
-    if ((sorted[base + 1] !== undefined)) {
+    if (sorted[base + 1] !== undefined) {
       return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
     } else {
       return sorted[base];
     }
   }
-  
 }

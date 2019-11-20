@@ -9,7 +9,7 @@ import theme from "./styles/theme";
 import { StoreState } from "./types";
 import { AppAction } from "./actions";
 import { reducer } from "./reducers";
-import { createStore } from 'redux';
+import { createStore } from "redux";
 import { Provider } from "react-redux";
 import MqttConnector from "./components/mqtt-connector";
 import AccessTokenRefresh from "./components/access-token-refresh";
@@ -17,23 +17,24 @@ import AccessTokenRefresh from "./components/access-token-refresh";
 const locale = "fi"; // TODO
 
 const initalStoreState: StoreState = {
-  locale: locale,
+  locale,
   queryValidationMessage: null
 };
 
-const store = createStore<StoreState, AppAction, any, any>(reducer as any, initalStoreState);
+const store = createStore<StoreState, AppAction, any, any>(
+  reducer as any,
+  initalStoreState
+);
 
 /**
  * Interface representing component properties
  */
-interface Props {
-}
+interface Props {}
 
 /**
  * Interface representing component state
  */
-interface State {
-}
+interface State {}
 /**
  * App component
  */
@@ -50,20 +51,28 @@ export default class App extends React.Component<Props, State> {
             <BrowserRouter>
               <AccessTokenRefresh>
                 <div className="App">
-                  <Route exact path="/panel/admin/liveview.page"
-                    component={ LiveView }/>
-                  
-                  <Route exact path="/panel/admin/reports.page" 
-                    component={ Reports }/>
+                  <Route
+                    exact
+                    path="/panel/admin/liveview.page"
+                    component={LiveView}
+                  />
+
+                  <Route
+                    exact
+                    path="/panel/admin/reports.page"
+                    component={Reports}
+                  />
 
                   <Route
                     path="/:panelSlug/:querySlug"
-                    exact={ true }
-                    render={ (props) => (
-                      <QueryPage panelSlug={ props.match.params.panelSlug as string } querySlug={ props.match.params.querySlug as string }/>
+                    exact
+                    render={props => (
+                      <QueryPage
+                        panelSlug={props.match.params.panelSlug as string}
+                        querySlug={props.match.params.querySlug as string}
+                      />
                     )}
                   />
-
                 </div>
               </AccessTokenRefresh>
             </BrowserRouter>
