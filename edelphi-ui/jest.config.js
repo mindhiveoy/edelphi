@@ -1,4 +1,5 @@
 module.exports = {
+  "extends": "react-app",
   "moduleFileExtensions": {
     "ts",
     "tsx",

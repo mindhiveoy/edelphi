@@ -29,7 +29,7 @@ export default class StatisticsUtils {
    * @return quantile
    */
   private static getQuantile(sorted: number[], quantile: number) {
-    if (sorted.length == 0) {
+    if (sorted.length === 0) {
       return 0;
     }
 
