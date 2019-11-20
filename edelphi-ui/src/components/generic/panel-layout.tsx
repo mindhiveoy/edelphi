@@ -2,99 +2,64 @@ import * as React from "react";
 import { Redirect } from "react-router-dom";
 import HeaderBackground from "../../gfx/header_background.png";
 import "../../styles/generic.scss";
-import { Container, Grid, Dimmer, Loader, Breadcrumb, SemanticShorthandCollection, BreadcrumbSectionProps } from "semantic-ui-react";
+import {
+  SemanticShorthandCollection,
+  BreadcrumbSectionProps
+} from "semantic-ui-react";
 import strings from "../../localization/strings";
 import { Panel, User } from "../../generated/client";
+import { CircularProgress, Container, Grid, Box } from "@material-ui/core";
 
-/**
- * Component props
- */
 interface Props {
-  redirectTo?: string,
-  panel?: Panel,
-  loading?: boolean,
-  loggedUser: User,
-  breadcrumbs: SemanticShorthandCollection<BreadcrumbSectionProps>
-}
-
-/**
- * Component state
- */
-interface State {
+  redirectTo?: string;
+  panel?: Panel;
+  loading?: boolean;
+  loggedUser: User;
+  breadcrumbs: SemanticShorthandCollection<BreadcrumbSectionProps>;
 }
 
 /**
  * Generic layout for panel admin
  */
-class PanelLayout extends React.Component<Props, State> {
-
-  /**
-   * Component did mount life-cycle event
-   */
+class PanelLayout extends React.Component<Props> {
   public componentDidMount = () => {
     window.scrollTo(0, 0);
-  }
+  };
 
-  /**
-   * Component render method
-   */
   public render() {
     if (this.props.redirectTo) {
-      return <Redirect to={this.props.redirectTo} />
+      return <Redirect to={this.props.redirectTo} />;
     }
 
-    if (!this.props.panel || this.props.loading) {
-      return (
-        <Dimmer>
-          <Loader>
-            { strings.generic.loading }
-          </Loader>
-        </Dimmer>
-      );
+    if (!this.props.panel || this.props.loading) {
+      return <CircularProgress />;
     }
 
     return (
       <div>
-        { this.renderHeader() }
-        { this.props.children }
-      </div>  
+        {this.renderHeader()}
+        {this.props.children}
+      </div>
     );
   }
 
-  /**
-   * Renders header
-   */
-  private renderHeader = () =>  {
+  private renderHeader = () => {
     return (
       <header style={{ backgroundImage: `url(${HeaderBackground})` }}>
         <Container>
-          <Grid>
-            <Grid.Row style={{ paddingBottom: 0 }}>
-              <Grid.Column width={ 6 }>
-                { this.renderTitle() }
-              </Grid.Column>
-              <Grid.Column width={ 5 } textAlign="center">
-                { this.renderLocaleChange() } 
-              </Grid.Column>
-              <Grid.Column width={ 5 } textAlign="right">
-                { this.remderProfileDetails() }
-              </Grid.Column>
-            </Grid.Row>
-            <Grid.Row style={{ paddingTop: 0 }}>
-              <Grid.Column width={ 16 }>
-                { this.renderNavigation() }
-              </Grid.Column>
-            </Grid.Row>
-            <Grid.Row style={{ paddingTop: "0px", paddingLeft: "10px" }}>
-              <Grid.Column>
-                  <Breadcrumb icon='right angle' sections={ this.props.breadcrumbs } />
-                </Grid.Column>
-              </Grid.Row>
+          <Grid container>
+            <Grid item xs={12}>
+              <Box textAlign="center">{this.renderLocaleChange()}</Box>
+            </Grid>
+            <Grid xs={6}>{this.renderTitle()}</Grid>
+            <Grid xs={6}>
+              <Box textAlign="right">{this.renderProfileDetails()}</Box>
+            </Grid>
           </Grid>
         </Container>
       </header>
     );
-  }
+  };
 
   /**
    * Renders title
@@ -106,11 +71,15 @@ class PanelLayout extends React.Component<Props, State> {
 
     return (
       <h1 className="header-title">
-        <a className="root-link" href="/">eDelphi.org</a>
-        <a className="panel-link" href={ "/" + this.props.panel.urlName }>{ this.props.panel.name }</a>
+        <a className="root-link" href="/">
+          eDelphi.org
+        </a>
+        <a className="panel-link" href={"/" + this.props.panel.urlName}>
+          {this.props.panel.name}
+        </a>
       </h1>
     );
-  }
+  };
 
   /**
    * Renders back link
@@ -119,15 +88,27 @@ class PanelLayout extends React.Component<Props, State> {
     if (!this.props.panel) {
       return null;
     }
-    
+
     return (
       <nav className="header-nav">
-        <a href={ `/${this.props.panel.urlName}` } className="header-nav-link"> { strings.panelAdmin.navigation.panel } </a>
-        <a href={ `/panel/admin/dashboard.page?panelId=${this.props.panel.id}` } className="header-nav-link header-nav-link-selected"> { strings.panelAdmin.navigation.administration } </a>
-        <a href={ `/panel/reportissue.page?panelId=${this.props.panel.id}` } className="header-nav-link"> { strings.panelAdmin.navigation.reportAnIssue } </a>
+        <a href={`/${this.props.panel.urlName}`} className="header-nav-link">
+          {strings.panelAdmin.navigation.panel}
+        </a>
+        <a
+          href={`/panel/admin/dashboard.page?panelId=${this.props.panel.id}`}
+          className="header-nav-link header-nav-link-selected"
+        >
+          {strings.panelAdmin.navigation.administration}
+        </a>
+        <a
+          href={`/panel/reportissue.page?panelId=${this.props.panel.id}`}
+          className="header-nav-link"
+        >
+          {strings.panelAdmin.navigation.reportAnIssue}
+        </a>
       </nav>
     );
-  }
+  };
 
   /**
    * Renders locale change links
@@ -137,90 +118,147 @@ class PanelLayout extends React.Component<Props, State> {
 
     return (
       <div>
-        <a className={ selectedLanguage === "fi" ? "header-locale-link header-locale-link-selected" : "header-locale-link"} href={ window.location.href } onClick={ this.onLocaleChangeFiClick }>Suomeksi</a>
-        <a className={ selectedLanguage === "en" ? "header-locale-link header-locale-link-selected" : "header-locale-link"} href={ window.location.href } onClick={ this.onLocaleChangeEnClick }>In English</a>
+        <a
+          className={
+            selectedLanguage === "fi"
+              ? "header-locale-link header-locale-link-selected"
+              : "header-locale-link"
+          }
+          href={window.location.href}
+          onClick={this.onLocaleChangeFiClick}
+        >
+          Suomeksi
+        </a>
+        <a
+          className={
+            selectedLanguage === "en"
+              ? "header-locale-link header-locale-link-selected"
+              : "header-locale-link"
+          }
+          href={window.location.href}
+          onClick={this.onLocaleChangeEnClick}
+        >
+          In English
+        </a>
       </div>
     );
-  }
+  };
 
   /**
    * Renders profile details
    */
-  private remderProfileDetails = () => {
+  private renderProfileDetails = () => {
     return (
-      <div style={{ marginTop: "10px" }}>
-        <Grid>
-          <Grid.Row>
-            <Grid.Column width={ 12 }>
-              <div style={{ color: "#fff" }}> { strings.formatString(strings.generic.welcomeUser, `${this.props.loggedUser.firstName} ${this.props.loggedUser.lastName}`) } </div>
-              <div><a href="/profile.page"> { strings.generic.profileLink } </a></div>
-              <div><a href="/logout.page"> { strings.generic.logoutLink } </a></div>
-            </Grid.Column>
-            <Grid.Column width={ 4 }>
-              { this.renderProfileImage() }
-            </Grid.Column>
-          </Grid.Row>
-        </Grid>
+      <div
+        style={{
+          display: "flex",
+          textAlign: "right",
+          color: "#fff",
+          justifyContent: "flex-end"
+        }}
+      >
+        <div>
+          <div>
+            {strings.formatString(
+              strings.generic.welcomeUser,
+              `${this.props.loggedUser.firstName} ${this.props.loggedUser.lastName}`
+            )}
+          </div>
+          <div>
+            <a style={{ color: "#87d0ff" }} href="/profile.page">
+               {strings.generic.profileLink}
+            </a>
+          </div>
+          <div>
+            <a style={{ color: "#87d0ff" }} href="/logout.page">
+              {" "}
+              {strings.generic.logoutLink}{" "}
+            </a>
+          </div>
+        </div>
+        <div>{this.renderProfileImage()}</div>
       </div>
     );
-  }
+  };
 
   /**
    * Renders profile image
    */
   private renderProfileImage = () => {
     if (!this.props.loggedUser.profileImageUrl) {
-      return null;
+      return (
+        <div
+          style={{
+            margin: "5px 0px 0px 15px",
+            width: "65px",
+            height: "65px",
+            float: "right",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center center",
+            backgroundSize: "contain",
+            boxShadow: "0px 0px 8px rgba(0, 0, 0, 0.2)",
+            backgroundColor: "#186089"
+          }}
+        ></div>
+      );
     }
 
     return (
-      <img alt={ strings.generic.profileImageAlt } style={{ maxWidth: "65px", maxHeight: "58px" }} src={ this.props.loggedUser.profileImageUrl }/>
+      <img
+        alt={strings.generic.profileImageAlt}
+        style={{ maxWidth: "65px", maxHeight: "58px" }}
+        src={this.props.loggedUser.profileImageUrl}
+      />
     );
-  }
+  };
 
   /**
    * Changes legacy UI locale
-   * 
+   *
    * @param locale locale
    */
   private changeLegacyLocale = async (locale: string) => {
     const date = new Date();
-    date.setTime(date.getTime() + (3650*24*60*60*1000));
+    date.setTime(date.getTime() + 3650 * 24 * 60 * 60 * 1000);
     const expires = "; expires=" + date.toUTCString();
     document.cookie = "eDelphiLocale=" + locale + expires + "; path=/";
     await (await fetch(`/locale/setlocale.json?locale=${locale}`)).json();
-  }
+  };
 
   /**
    * Changes locale
-   * 
+   *
    * @param locale locale
    */
   private changeLocale = async (locale: string) => {
     await this.changeLegacyLocale(locale);
     // TODO: locale to redux
     window.location.reload(true);
-  }
+  };
 
   /**
    * Event handler for locale fi link click
-   * 
+   *
    * @param event event
    */
-  private onLocaleChangeFiClick = async (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+  private onLocaleChangeFiClick = async (
+    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+  ) => {
     event.preventDefault();
     await this.changeLocale("fi");
-  }
+  };
 
   /**
    * Event handler for locale en link click
-   * 
+   *
    * @param event event
    */
-  private onLocaleChangeEnClick = async (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+  private onLocaleChangeEnClick = async (
+    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+  ) => {
     event.preventDefault();
     await this.changeLocale("en");
-  }
+  };
 }
 
 export default PanelLayout;
