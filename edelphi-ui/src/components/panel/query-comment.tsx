@@ -117,7 +117,7 @@ export class QueryCommentClass extends React.Component<Props, State> {
               this.formatDateTime(this.props.comment.created)
             )}{" "}
           </div>
-          {this.props.comment.creatorId == this.props.logggedUserId ? (
+          {this.props.comment.creatorId === this.props.logggedUserId ? (
             <p style={{ fontStyle: "italic", fontWeight: "bold" }}>
               {" "}
               {strings.panel.query.comments.yourComment}{" "}
@@ -237,7 +237,7 @@ export class QueryCommentClass extends React.Component<Props, State> {
    * Renders comment modified text (if comment has been modified)
    */
   private renderModified() {
-    if (this.props.comment.created == this.props.comment.lastModified) {
+    if (this.props.comment.created === this.props.comment.lastModified) {
       return null;
     }
 
@@ -312,7 +312,7 @@ export class QueryCommentClass extends React.Component<Props, State> {
             }
             className="queryCommentNewCommentLink"
           >
-            {this.props.comment.creatorId == this.props.logggedUserId
+            {this.props.comment.creatorId === this.props.logggedUserId
               ? strings.panel.query.comments.ellaborate
               : strings.panel.query.comments.reply}
           </a>
@@ -392,9 +392,9 @@ export class QueryCommentClass extends React.Component<Props, State> {
    */
   private canEditComment = () => {
     return (
-      this.state.hasChildren == false &&
+      this.state.hasChildren === false &&
       (this.props.canManageComments ||
-        this.props.logggedUserId == this.props.comment.creatorId)
+        this.props.logggedUserId === this.props.comment.creatorId)
     );
   };
 
@@ -688,14 +688,14 @@ export class QueryCommentClass extends React.Component<Props, State> {
   ) {
     switch (message.type) {
       case "UPDATED":
-        if (message.commentId == this.props.comment.id) {
+        if (message.commentId === this.props.comment.id) {
           this.setState({
             updating: false
           });
         }
         break;
       case "CREATED":
-        if (message.parentCommentId == this.props.comment.id) {
+        if (message.parentCommentId === this.props.comment.id) {
           this.setState({
             updating: false
           });

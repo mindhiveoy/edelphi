@@ -87,6 +87,7 @@ class Reports extends React.Component<Props, State> {
   public async componentDidMount() {
     const queryParams = queryString.parse(this.props.location.search);
 
+    // tslint:disable-next-line: radix
     const panelId = parseInt(queryParams.panelId as string);
 
     this.setState({
@@ -219,7 +220,7 @@ class Reports extends React.Component<Props, State> {
                 key={query.id}
                 query={query}
                 panelId={panelId}
-                selected={this.state.selectedQueryId == query.id}
+                selected={this.state.selectedQueryId === query.id}
                 onClick={() => {
                   this.setState({ selectedQueryId: query.id });
                 }}
@@ -294,15 +295,15 @@ class Reports extends React.Component<Props, State> {
           queryId: this.state.selectedQueryId,
           options: {
             expertiseGroupIds:
-              this.state.expertiseGroupIds == "ALL"
+              this.state.expertiseGroupIds === "ALL"
                 ? undefined
                 : this.state.expertiseGroupIds,
             queryPageIds:
-              this.state.filterQueryPageId == "ALL"
+              this.state.filterQueryPageId === "ALL"
                 ? undefined
                 : [this.state.filterQueryPageId],
             commentCategoryIds:
-              this.state.commentCategoryIds == "ALL"
+              this.state.commentCategoryIds === "ALL"
                 ? undefined
                 : this.state.commentCategoryIds
           }
