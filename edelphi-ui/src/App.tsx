@@ -13,6 +13,7 @@ import { createStore } from "redux";
 import { Provider } from "react-redux";
 import MqttConnector from "./components/mqtt-connector";
 import AccessTokenRefresh from "./components/access-token-refresh";
+import PanelPage from "./screens/panel/panel";
 
 const locale = "fi"; // TODO
 
@@ -62,6 +63,8 @@ export default class App extends React.Component<Props, State> {
                     path="/panel/admin/reports.page"
                     component={Reports}
                   />
+
+                  <Route path="/:panelSlug/" exact component={PanelPage} />
 
                   <Route
                     path="/:panelSlug/:querySlug"
