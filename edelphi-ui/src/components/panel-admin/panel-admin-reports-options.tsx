@@ -602,16 +602,4 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
-/**
- * Redux mapper for mapping component dispatches
- *
- * @param dispatch dispatch method
- */
-function mapDispatchToProps(dispatch: React.Dispatch<actions.AppAction>) {
-  return {};
-}
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(PanelAdminReportsOptions);
+export default connect(mapStateToProps)(PanelAdminReportsOptions);

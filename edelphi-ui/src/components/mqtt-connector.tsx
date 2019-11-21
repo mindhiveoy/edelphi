@@ -9,38 +9,38 @@ import { connect } from "react-redux";
  * Component props
  */
 interface Props {
-  accessToken?: string,
-  locale: string
+  accessToken?: string;
+  locale: string;
 }
 
 /**
  * Component state
  */
 interface State {
-  options?: MqttConfig
+  options?: MqttConfig;
+  error?: any;
 }
 
 /**
  * MQTT connector component
  */
 class MqttConnector extends React.Component<Props, State> {
-
   private connection: MqttConnection;
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
     super(props);
     this.connection = mqttConnection;
-    this.state = { };
+    this.state = {};
   }
 
   /**
    * Component did update life-cycle event
-   * 
+   *
    * @param prevProps previous props
    * @param prevState previous state
    */
@@ -51,7 +51,11 @@ class MqttConnector extends React.Component<Props, State> {
       });
     }
 
-    if (this.state.options && !this.connection.isConnected() && !this.connection.isConnecting()) {
+    if (
+      this.state.options &&
+      !this.connection.isConnected() &&
+      !this.connection.isConnecting()
+    ) {
       if (this.state.options) {
         this.connection.connect(this.state.options);
       }
@@ -61,9 +65,13 @@ class MqttConnector extends React.Component<Props, State> {
   /**
    * Component will unmount life-cycle event
    */
-  public componentWillUnmount() {
+  public componentWillUnmount() {
     this.connection.disconnect();
   }
+
+  public componentDidCatch = (error: any) => {
+    this.setState({ error });
+  };
 
   /**
    * Component did mount life-cycle event
@@ -76,32 +84,38 @@ class MqttConnector extends React.Component<Props, State> {
 
   /**
    * Component render method
-   * 
+   *
    * @return returns child components
    */
   public render() {
+    const { error } = this.state;
+    if (error) {
+      return <div>{JSON.stringify(error)}</div>;
+    }
     return this.props.children;
   }
 
   /**
    * Loads MQTT connection options from the server
    */
-  private async getConnectionOptions(): Promise<MqttConfig | undefined> {
+  private async getConnectionOptions(): Promise<MqttConfig | undefined> {
     if (!this.props.accessToken) {
       return undefined;
     }
 
-    return (await fetch("/api/v1/system/mqttSettings", {
-      headers: {
-        "Authorization": `Bearer ${this.props.accessToken}`
-      }
-    })).json();
+    return (
+      await fetch("/api/v1/system/mqttSettings", {
+        headers: {
+          Authorization: `Bearer ${this.props.accessToken}`
+        }
+      })
+    ).json();
   }
 }
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -112,13 +126,12 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
-  return {
-  };
+  return {};
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(MqttConnector);

@@ -15,8 +15,7 @@
     "object-literal-shorthand": true,
     "eofline": false,
     "no-empty-interface": false,
-    "no-unused-vars": true,
-    "@typescript-eslint/no-unused-vars": false
+    "no-unused-vars": true
   },
   "linterOptions": {
     "exclude": [

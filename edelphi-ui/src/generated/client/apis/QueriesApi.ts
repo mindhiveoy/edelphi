@@ -21,6 +21,7 @@ import {
   QueryFromJSON,
   QueryToJSON
 } from "../models";
+import { MOCK_API, getMockApiFile } from "../../../debug";
 
 export interface ListQueriesRequest {
   panelId: number;
@@ -84,6 +85,9 @@ export class QueriesApi extends runtime.BaseAPI {
   async listQueries(
     requestParameters: ListQueriesRequest
   ): Promise<Array<Query>> {
+    if (MOCK_API) {
+      return await getMockApiFile("listQueries");
+    }
     const response = await this.listQueriesRaw(requestParameters);
     return await response.value();
   }

@@ -1254,11 +1254,9 @@ class LiveView extends React.Component<Props, State> {
   private async onQueryQuestionAnswerNotification(
     notification: QueryQuestionAnswerNotification
   ) {
-    if (!this.state.panel || !this.state.panel.id) {
-      return;
-    }
-
     if (
+      !this.state.panel ||
+      !this.state.panel.id ||
       notification.panelId !== this.state.panel.id ||
       notification.pageId !== this.state.pageId
     ) {

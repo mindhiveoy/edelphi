@@ -1,6 +1,6 @@
 import * as React from "react";
 import { BrowserRouter, Route } from "react-router-dom";
-import QueryPage from "./screens/panel/query";
+import QueryScreen from "./screens/panel/query";
 import LiveView from "./screens/live-view";
 import Reports from "./screens/reports";
 import { CssBaseline } from "@material-ui/core";
@@ -65,13 +65,7 @@ export default class App extends React.Component<Props, State> {
 
                   <Route
                     path="/:panelSlug/:querySlug"
-                    exact
-                    render={props => (
-                      <QueryPage
-                        panelSlug={props.match.params.panelSlug as string}
-                        querySlug={props.match.params.querySlug as string}
-                      />
-                    )}
+                    component={QueryScreen}
                   />
                 </div>
               </AccessTokenRefresh>
