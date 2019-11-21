@@ -13,6 +13,7 @@ import { createStore } from "redux";
 import { Provider } from "react-redux";
 import MqttConnector from "./components/mqtt-connector";
 import AccessTokenRefresh from "./components/access-token-refresh";
+import PanelPage from "./screens/panel/panel";
 
 const locale = "fi"; // TODO
 
@@ -64,8 +65,18 @@ export default class App extends React.Component<Props, State> {
                   />
 
                   <Route
-                    path="/:panelSlug/:querySlug"
+                    path="/:panelSlug/"
                     exact
+                    render={props => (
+                      <PanelPage
+                        panelSlug={props.match.params.panelSlug as string}
+                        querySlug={props.match.params.querySlug as string}
+                      />
+                    )}
+                  />
+
+                  <Route
+                    path="/:panelSlug/:querySlug"
                     render={props => (
                       <QueryPage
                         panelSlug={props.match.params.panelSlug as string}

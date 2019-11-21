@@ -14,7 +14,7 @@ interface Props {
   redirectTo?: string;
   panel?: Panel;
   loading?: boolean;
-  loggedUser: User;
+  loggedUser?: User;
   breadcrumbs: SemanticShorthandCollection<BreadcrumbSectionProps>;
 }
 
@@ -38,7 +38,7 @@ class PanelLayout extends React.Component<Props> {
     return (
       <div>
         {this.renderHeader()}
-        {this.props.children}
+        <Container>{this.props.children}</Container>
       </div>
     );
   }
@@ -51,8 +51,10 @@ class PanelLayout extends React.Component<Props> {
             <Grid item xs={12}>
               <Box textAlign="center">{this.renderLocaleChange()}</Box>
             </Grid>
-            <Grid xs={6}>{this.renderTitle()}</Grid>
-            <Grid xs={6}>
+            <Grid item xs={6}>
+              {this.renderTitle()}
+            </Grid>
+            <Grid item xs={6}>
               <Box textAlign="right">{this.renderProfileDetails()}</Box>
             </Grid>
           </Grid>
@@ -148,6 +150,8 @@ class PanelLayout extends React.Component<Props> {
    * Renders profile details
    */
   private renderProfileDetails = () => {
+    const { loggedUser } = this.props;
+
     return (
       <div
         style={{
@@ -161,7 +165,9 @@ class PanelLayout extends React.Component<Props> {
           <div>
             {strings.formatString(
               strings.generic.welcomeUser,
-              `${this.props.loggedUser.firstName} ${this.props.loggedUser.lastName}`
+              `${loggedUser ? loggedUser.firstName : ""} ${
+                loggedUser ? loggedUser.lastName : ""
+              }`
             )}
           </div>
           <div>
@@ -185,7 +191,9 @@ class PanelLayout extends React.Component<Props> {
    * Renders profile image
    */
   private renderProfileImage = () => {
-    if (!this.props.loggedUser.profileImageUrl) {
+    const { loggedUser } = this.props;
+
+    if (!loggedUser || !loggedUser.profileImageUrl) {
       return (
         <div
           style={{
@@ -207,7 +215,7 @@ class PanelLayout extends React.Component<Props> {
       <img
         alt={strings.generic.profileImageAlt}
         style={{ maxWidth: "65px", maxHeight: "58px" }}
-        src={this.props.loggedUser.profileImageUrl}
+        src={loggedUser.profileImageUrl}
       />
     );
   };
