@@ -1,27 +1,34 @@
 import React from "react";
 import PanelLayout from "../../components/generic/panel-layout";
 import api from "../../api/api";
-import { StoreState, WithAccessToken } from "../../types";
-import { User, Panel } from "../../generated/client";
+import { AccessToken, StoreState, WithAccessToken } from "../../types";
+import { User, Panel, Query } from "../../generated/client";
 import { SemanticShorthandCollection } from "semantic-ui-react/dist/commonjs/generic";
 import { BreadcrumbSectionProps } from "semantic-ui-react";
 import strings from "../../localization/strings";
-import { connect } from "react-redux";
+import { connect, DispatchProp } from "react-redux";
 import { Grid } from "@material-ui/core";
 import DocumentsContainer from "../../components/panel/documents";
 import QueriesContainer from "../../components/panel/queries";
 import BulletinsContainer from "../../components/panel/bulletins";
 import { withRouter, RouteComponentProps } from "react-router";
 
-interface PanelPageProps {
+interface PanelRouteParams {
   panelSlug: string;
-  querySlug: string;
+}
+
+interface PanelPageProps
+  extends DispatchProp<any>,
+    RouteComponentProps<PanelRouteParams> {
+  accessToken: AccessToken;
+  panelSlug: string;
 }
 
 interface State {
   loading: boolean;
   loggedUser?: User;
   panel?: Panel;
+  queries?: Query[];
 }
 
 class PanelPage extends React.Component<
@@ -43,6 +50,7 @@ class PanelPage extends React.Component<
   };
 
   public render() {
+    const { accessToken } = this.props;
     const { loggedUser, loading, panel } = this.state;
 
     const breadcrumbs: SemanticShorthandCollection<BreadcrumbSectionProps> = [
@@ -61,14 +69,14 @@ class PanelPage extends React.Component<
         panel={panel}
         breadcrumbs={breadcrumbs}
       >
-        <Grid container>
-          <Grid item xs={4}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <QueriesContainer panel={panel} accessToken={accessToken} />
+          </Grid>
+          <Grid item xs={12} md={3}>
             <DocumentsContainer />
           </Grid>
-          <Grid item xs={4}>
-            <QueriesContainer />
-          </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={12} md={3}>
             <BulletinsContainer />
           </Grid>
         </Grid>
@@ -77,40 +85,50 @@ class PanelPage extends React.Component<
   }
 
   private loadData = async () => {
-    const { accessToken } = this.props;
-    if (!(accessToken && accessToken.token)) {
-      return;
+    const {
+      panelSlug,
+      accessToken: { token }
+    } = this.props;
+
+    try {
+      const panels = await api.getPanelsService(token).listPanels({
+        urlName: panelSlug
+      });
+
+      const panel = panels.length ? panels[0] : undefined;
+      if (!panel || !panel.id) {
+        // TODO: handle panel not found gracefully
+        throw new Error("Could not find panel");
+      }
+
+      const loggedUser = await api
+        .getUsersService(this.props.accessToken.token)
+        .findUser({
+          userId: this.props.accessToken.userId
+        });
+
+      this.setState({
+        panel,
+        loggedUser,
+        loading: false
+      });
+    } catch (error) {
+      // TODO: error handling
+      // tslint:disable-next-line: no-console
+      console.error(error);
     }
-    const token = accessToken.token;
-
-    const panels = await api.getPanelsService(token).listPanels({
-      urlName: this.props.panelSlug
-    });
-
-    const panel = panels.length ? panels[0] : undefined;
-    if (!panel || !panel.id) {
-      throw new Error("Could not find panel");
-    }
-
-    const loggedUser = await api.getUsersService(token).findUser({
-      userId: accessToken.userId
-    });
-
-    this.setState({
-      loading: false,
-      panel,
-      loggedUser
-    });
   };
 }
 
-function mapStateToProps(state: StoreState, ownProps: PanelPageProps) {
+/**
+ * Redux mapper for mapping store state to component props
+ *
+ * @param state store state
+ */
+function mapStateToProps(state: StoreState) {
   return {
-    ...ownProps,
-    accessToken: state.accessToken
+    accessToken: state.accessToken as AccessToken
   };
 }
 
-export default withRouter<RouteComponentProps<any>, any>(
-  connect(mapStateToProps)(PanelPage)
-);
+export default withRouter(connect(mapStateToProps)(PanelPage) as any);

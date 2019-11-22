@@ -8,7 +8,8 @@ import {
 } from "semantic-ui-react";
 import strings from "../../localization/strings";
 import { Panel, User } from "../../generated/client";
-import { CircularProgress, Container, Grid, Box } from "@material-ui/core";
+import { Container, Grid, Box } from "@material-ui/core";
+import CircularProgressLoader from "../CircularProgressLoader";
 import styled from "@emotion/styled";
 
 interface Props {
@@ -40,7 +41,7 @@ class PanelLayout extends React.Component<Props> {
     }
 
     if (!this.props.panel || this.props.loading) {
-      return <CircularProgress />;
+      return <CircularProgressLoader />;
     }
 
     return (
