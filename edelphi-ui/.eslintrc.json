@@ -1,0 +1,30 @@
+{
+  "extends": [
+    "react-app",
+    "plugin:jsx-a11y/recommended",
+    "prettier",
+    "prettier/react"
+  ],
+  "plugins": ["jsx-a11y", "prettier"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "off",
+    "semi": 1,
+    "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
+    "prettier/prettier": [
+      "error",
+      {
+        "semi": true
+      }
+    ],
+    "trailing-comma": "all",
+    "no-unused-expression": false
+  },
+  "overrides": [
+    {
+      "files": ["test/*.spec.js"],
+      "rules": {
+        "require-jsdoc": "off"
+      }
+    }
+  ]
+}

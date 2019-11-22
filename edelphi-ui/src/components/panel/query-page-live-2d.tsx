@@ -1,6 +1,12 @@
 import * as React from "react";
 import * as actions from "../../actions";
-import { StoreState, AccessToken, QueryQuestionAnswerNotification, QueryPageStatistics, QueryLive2dAnswer } from "../../types";
+import {
+  StoreState,
+  AccessToken,
+  QueryQuestionAnswerNotification,
+  QueryPageStatistics,
+  QueryLive2dAnswer
+} from "../../types";
 import { connect } from "react-redux";
 import { mqttConnection, OnMessageCallback } from "../../mqtt";
 import { Loader, Dimmer, Segment, Grid } from "semantic-ui-react";
@@ -9,33 +15,37 @@ import ErrorDialog from "../error-dialog";
 import Live2dQueryStatistics from "../generic/live2d-query-statistics";
 import StatisticsUtils from "../../statistics/statistics-utils";
 import Live2dQueryChart from "../generic/live2d-query-chart";
-import { QueryPageLive2d, QueryPageLive2DAnswersVisibleOption, QueryQuestionLive2dAnswerData } from "../../generated/client";
+import {
+  QueryPageLive2d,
+  QueryPageLive2DAnswersVisibleOption,
+  QueryQuestionLive2dAnswerData
+} from "../../generated/client";
 import api from "../../api/api";
 
 /**
  * Interface representing component properties
  */
 interface Props {
-  queryReplyId: number | null,
-  accessToken?: AccessToken,
-  pageId: number,
-  panelId: number,
-  queryId: number
+  queryReplyId: number | null;
+  accessToken?: AccessToken;
+  pageId: number;
+  panelId: number;
+  queryId: number;
 }
 
 /**
  * Interface representing component state
  */
 interface State {
-  contents?: string,
-  loaded: boolean,
-  commentId?: number
-  values: QueryLive2dAnswer[],
-  page?: QueryPageLive2d,
-  error?: Error,
-  statisticsX: QueryPageStatistics,
-  statisticsY: QueryPageStatistics,
-  chartSize: number | null
+  contents?: string;
+  loaded: boolean;
+  commentId?: number;
+  values: QueryLive2dAnswer[];
+  page?: QueryPageLive2d;
+  error?: Error;
+  statisticsX: QueryPageStatistics;
+  statisticsY: QueryPageStatistics;
+  chartSize: number | null;
 }
 
 /**
@@ -47,15 +57,14 @@ const GRAPH_WINDOW_OFFSET = 40;
  * React component for live 2d chart
  */
 class QueryPageLive2dComponent extends React.Component<Props, State> {
-
-  private chartContainerRef: HTMLDivElement | null;
+  private chartContainerRef: HTMLDivElement | null;
   private queryQuestionAnswersListener: OnMessageCallback;
   private savedAt: number = 0;
   private saving: boolean = false;
 
   /**
    * Constructor
-   * 
+   *
    * @param props component properties
    */
   constructor(props: Props) {
@@ -69,24 +78,32 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
     };
 
     this.chartContainerRef = null;
-    this.queryQuestionAnswersListener = this.onQueryQuestionAnswerNotification.bind(this);
+    this.queryQuestionAnswersListener = this.onQueryQuestionAnswerNotification.bind(
+      this
+    );
   }
-  
+
   /**
    * Component will mount life-cycle event
    */
   public componentWillMount() {
-    mqttConnection.subscribe("queryquestionanswers", this.queryQuestionAnswersListener);
+    mqttConnection.subscribe(
+      "queryquestionanswers",
+      this.queryQuestionAnswersListener
+    );
   }
 
   /**
    * Component will unmount life-cycle event
    */
   public componentWillUnmount() {
-    mqttConnection.unsubscribe("queryquestionanswers", this.queryQuestionAnswersListener);
+    mqttConnection.unsubscribe(
+      "queryquestionanswers",
+      this.queryQuestionAnswersListener
+    );
     window.removeEventListener("resize", this.onWindowResize);
   }
-  
+
   /**
    * Component did update life-cycle event
    */
@@ -112,7 +129,7 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
   public async componentDidUpdate(prevProps: Props) {
     try {
       if (!this.state.loaded) {
-        this.load();
+        await this.load();
       }
     } catch (e) {
       this.setState({
@@ -121,19 +138,24 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
     }
   }
 
-  /** 
+  /**
    * Component render method
    */
   public render() {
     if (this.state.error) {
-      return <ErrorDialog error={ this.state.error } onClose={ () => this.setState({ error: undefined }) } /> 
+      return (
+        <ErrorDialog
+          error={this.state.error}
+          onClose={() => this.setState({ error: undefined })}
+        />
+      );
     }
 
     if (!this.state.loaded) {
       return (
         <Segment style={{ minHeight: "400px" }}>
           <Dimmer inverted active>
-            <Loader>{ strings.generic.loading }</Loader>
+            <Loader>{strings.generic.loading}</Loader>
           </Dimmer>
         </Segment>
       );
@@ -142,13 +164,16 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
     return (
       <Grid>
         <Grid.Row>
-          <Grid.Column mobile={ 16 } computer={ 10 }>
-            <div style={{margin:"auto"}} ref={ (element) => this.setChartWrapperDiv(element) }>
-              { this.renderChart() }
+          <Grid.Column mobile={16} computer={10}>
+            <div
+              style={{ margin: "auto" }}
+              ref={element => this.setChartWrapperDiv(element)}
+            >
+              {this.renderChart()}
             </div>
-          </Grid.Column>          
-          <Grid.Column mobile={ 16 } computer={ 6 }>
-            { this.renderStatistics() }
+          </Grid.Column>
+          <Grid.Column mobile={16} computer={6}>
+            {this.renderStatistics()}
           </Grid.Column>
         </Grid.Row>
       </Grid>
@@ -160,18 +185,19 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
    */
   public componentDidCatch = (error: Error) => {
     this.setState({
-      error: error
+      error
     });
-  }
-  
+  };
+
   /**
    * Ref callback for chart wrapper div
    */
-  private setChartWrapperDiv(element: HTMLDivElement | null) {
+  private setChartWrapperDiv(element: HTMLDivElement | null) {
     this.chartContainerRef = element;
 
     if (this.chartContainerRef && !this.state.chartSize) {
-      const maxSize = Math.min(window.innerWidth, window.innerHeight) - GRAPH_WINDOW_OFFSET;
+      const maxSize =
+        Math.min(window.innerWidth, window.innerHeight) - GRAPH_WINDOW_OFFSET;
 
       this.setState({
         chartSize: Math.min(this.chartContainerRef.offsetWidth, maxSize)
@@ -184,47 +210,57 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
    */
   private renderStatistics = () => {
     return (
-      <Live2dQueryStatistics statisticsX={ this.state.statisticsX } statisticsY={ this.state.statisticsY } />
+      <Live2dQueryStatistics
+        statisticsX={this.state.statisticsX}
+        statisticsY={this.state.statisticsY}
+      />
     );
-  }
+  };
 
   private renderChart() {
-    if (!this.state.loaded || !this.state.page || !this.state.chartSize) {
+    if (!this.state.loaded || !this.state.page || !this.state.chartSize) {
       return null;
     }
 
     const values = this.getValuesVisible() ? this.state.values : [];
 
-    return <Live2dQueryChart 
-      page={ this.state.page } 
-      values={ values } 
-      chartSize={ this.state.chartSize }
-      onScatterChartClick={ this.onScatterChartClick } 
-      onScatterChartMouseDown={ this.onScatterChartMouseDown }/>
+    return (
+      <Live2dQueryChart
+        page={this.state.page}
+        values={values}
+        chartSize={this.state.chartSize}
+        onScatterChartClick={this.onScatterChartClick}
+        onScatterChartMouseDown={this.onScatterChartMouseDown}
+      />
+    );
   }
 
   /**
    * Calculates statistics for x-axis
-   * 
+   *
    * @param values answers
    * @returns statistics for x-axis
    */
   private getStatisticsX(values: QueryLive2dAnswer[]): QueryPageStatistics {
-    return StatisticsUtils.getStatistics(values.map((value: QueryLive2dAnswer) => {
-      return value.x;
-    }));
+    return StatisticsUtils.getStatistics(
+      values.map((value: QueryLive2dAnswer) => {
+        return value.x;
+      })
+    );
   }
 
   /**
    * Calculates statistics for y-axis
-   * 
+   *
    * @param values answers
    * @returns statistics for y-axis
    */
   private getStatisticsY(values: QueryLive2dAnswer[]): QueryPageStatistics {
-    return StatisticsUtils.getStatistics(values.map((value: QueryLive2dAnswer) => {
-      return value.y;
-    }));
+    return StatisticsUtils.getStatistics(
+      values.map((value: QueryLive2dAnswer) => {
+        return value.y;
+      })
+    );
   }
 
   /**
@@ -251,7 +287,9 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
       return;
     }
 
-    const getQueryPagesService = api.getQueryPagesService(this.props.accessToken.token);
+    const getQueryPagesService = api.getQueryPagesService(
+      this.props.accessToken.token
+    );
 
     this.setState({
       page: await getQueryPagesService.findQueryPageLive2d({
@@ -269,15 +307,19 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
       return;
     }
 
-    const queryQuestionAnswersService = api.getQueryQuestionAnswersService(this.props.accessToken.token);
+    const queryQuestionAnswersService = api.getQueryQuestionAnswersService(
+      this.props.accessToken.token
+    );
 
-    const answers = await queryQuestionAnswersService.listQueryQuestionAnswersLive2d({
-      panelId: this.props.panelId,
-      pageId: this.props.pageId,
-      queryId: this.props.queryId
-    });
+    const answers = await queryQuestionAnswersService.listQueryQuestionAnswersLive2d(
+      {
+        panelId: this.props.panelId,
+        pageId: this.props.pageId,
+        queryId: this.props.queryId
+      }
+    );
 
-    const values: QueryLive2dAnswer[] = answers.map((answer) => {
+    const values: QueryLive2dAnswer[] = answers.map(answer => {
       return {
         x: answer.data.x,
         y: answer.data.y,
@@ -285,9 +327,9 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
         id: answer.id!
       };
     });
-    
+
     this.setState({
-      values: values,
+      values,
       statisticsX: this.getStatisticsX(values),
       statisticsY: this.getStatisticsY(values)
     });
@@ -295,7 +337,7 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
 
   /**
    * Returns whether values should be visible or not
-   * 
+   *
    * @returns whether values should be visible or not
    */
   private getValuesVisible = () => {
@@ -303,39 +345,43 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
       return false;
     }
 
-    if (this.state.page.answersVisible == QueryPageLive2DAnswersVisibleOption.AFTEROWNANSWER) {
+    if (
+      this.state.page.answersVisible ===
+      QueryPageLive2DAnswersVisibleOption.AFTEROWNANSWER
+    ) {
       return this.getHasOwnAnswer();
     }
 
     return true;
-  }
+  };
 
   /**
    * Returns whether user has already answered or not
-   * 
+   *
    * @return whether user has already answered or not
    */
   private getHasOwnAnswer = () => {
     const values = this.state.values;
     const id = this.getLoggedUserAnswerId();
 
-    for (let i = 0; i < values.length; i++) {
-      if (values[i].id == id) {
+    // tslint:disable-next-line: prefer-for-of
+    for (let i = 0; i < values.length; i++) {
+      if (values[i].id === id) {
         return true;
       }
     }
 
     return false;
-  }
+  };
 
   /**
    * Returns logged user answer id
-   * 
+   *
    * @return logged user answer id
    */
   private getLoggedUserAnswerId = () => {
     return `${this.props.pageId}-${this.props.queryReplyId}`;
-  }
+  };
 
   /**
    * Pulsates own answer
@@ -343,23 +389,24 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
   private pulse = () => {
     const values = this.state.values;
     const id = this.getLoggedUserAnswerId();
-    
-    for (let i = 0; i < values.length; i++) {
-      if (values[i].id == id) {
+
+    // tslint:disable-next-line: prefer-for-of
+    for (let i = 0; i < values.length; i++) {
+      if (values[i].id === id) {
         values[i].z = values[i].z > 500 ? 500 : 1000;
 
         this.setState({
-          values: values
+          values
         });
 
         return;
       }
     }
-  }
+  };
 
   /**
    * Updates single answer
-   * 
+   *
    * @param id answer id
    * @param x x
    * @param y y
@@ -369,8 +416,9 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
     const values = this.state.values;
     let updated = false;
 
-    for (let i = 0; i < values.length; i++) {
-      if (values[i].id == id) {
+    // tslint:disable-next-line: prefer-for-of
+    for (let i = 0; i < values.length; i++) {
+      if (values[i].id === id) {
         values[i].x = x;
         values[i].y = y;
         updated = true;
@@ -380,15 +428,15 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
 
     if (!updated) {
       values.push({
-        x: x,
-        y: y,
+        x,
+        y,
         z: 500,
-        id: id
+        id
       });
     }
-    
+
     this.setState({
-      values: values,
+      values,
       statisticsX: this.getStatisticsX(values),
       statisticsY: this.getStatisticsY(values)
     });
@@ -396,59 +444,68 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
 
   /**
    * Saves user answer
-   * 
+   *
    * @param x answer x
    * @param y answer y
    */
   private saveAnswer = async (x: number, y: number) => {
-    if (!this.props.accessToken || this.saving || !this.props.queryReplyId) {
+    if (!this.props.accessToken || this.saving || !this.props.queryReplyId) {
       return;
     }
 
     this.saving = true;
 
-    const queryQuestionAnswersService = api.getQueryQuestionAnswersService(this.props.accessToken.token);
+    const queryQuestionAnswersService = api.getQueryQuestionAnswersService(
+      this.props.accessToken.token
+    );
     const answerData: QueryQuestionLive2dAnswerData = {
-      x: x,
-      y: y
+      x,
+      y
     };
 
     const answerId = this.getLoggedUserAnswerId();
 
-    const updatedAnswer = await queryQuestionAnswersService.upsertQueryQuestionAnswerLive2d({
-      answerId: answerId,
-      panelId: this.props.panelId,
-      queryQuestionAnswerLive2d: {
-        queryReplyId: this.props.queryReplyId,
-        queryPageId: this.props.pageId,
-        data: answerData
+    const updatedAnswer = await queryQuestionAnswersService.upsertQueryQuestionAnswerLive2d(
+      {
+        answerId,
+        panelId: this.props.panelId,
+        queryQuestionAnswerLive2d: {
+          queryReplyId: this.props.queryReplyId,
+          queryPageId: this.props.pageId,
+          data: answerData
+        }
       }
-    });
+    );
 
     if (updatedAnswer && updatedAnswer.id) {
-      this.updateAnswer(updatedAnswer.id, updatedAnswer.data.x, updatedAnswer.data.y);
+      this.updateAnswer(
+        updatedAnswer.id,
+        updatedAnswer.data.x,
+        updatedAnswer.data.y
+      );
     }
 
     this.saving = false;
     this.savedAt = new Date().getTime();
-  }
+  };
 
   /**
    * Recalculates a chart size
    */
   private recalculateChartSize = () => {
     if (this.chartContainerRef) {
-      const maxSize = Math.min(window.innerWidth, window.innerHeight) - GRAPH_WINDOW_OFFSET;
+      const maxSize =
+        Math.min(window.innerWidth, window.innerHeight) - GRAPH_WINDOW_OFFSET;
 
       this.setState({
         chartSize: Math.min(this.chartContainerRef.offsetWidth, maxSize)
       });
     }
-  }
+  };
 
   /**
    * Event handler for handling scatter click events
-   * 
+   *
    * @param data event data
    */
   private onScatterChartClick = async (data: any) => {
@@ -458,11 +515,11 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
 
     const { xValue, yValue } = data;
     await this.saveAnswer(xValue, yValue);
-  }
+  };
 
   /**
    * Event handler for handling scatter mouse down events
-   * 
+   *
    * @param data event data
    */
   private onScatterChartMouseDown = async (data: any) => {
@@ -472,14 +529,16 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
 
     const { xValue, yValue } = data;
     await this.saveAnswer(xValue, yValue);
-  }
+  };
 
   /**
    * Handles query question comment notification MQTT message
-   * 
+   *
    * @param notification notification
    */
-  private async onQueryQuestionAnswerNotification(notification: QueryQuestionAnswerNotification) {
+  private async onQueryQuestionAnswerNotification(
+    notification: QueryQuestionAnswerNotification
+  ) {
     switch (notification.type) {
       case "UPDATED":
         if (!this.props.accessToken) {
@@ -489,18 +548,25 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
         const loggedUserAnswerId = this.getLoggedUserAnswerId();
         const now = new Date().getTime();
 
-        if (loggedUserAnswerId == notification.answerId && (now - this.savedAt < 10000)) {
+        if (
+          loggedUserAnswerId === notification.answerId &&
+          now - this.savedAt < 10000
+        ) {
           return;
         }
 
-        const queryQuestionAnswersService = api.getQueryQuestionAnswersService(this.props.accessToken.token); 
-        const answer = await queryQuestionAnswersService.findQueryQuestionAnswerLive2d({
-          answerId: notification.answerId,
-          panelId: this.props.panelId
-        });
-        
+        const queryQuestionAnswersService = api.getQueryQuestionAnswersService(
+          this.props.accessToken.token
+        );
+        const answer = await queryQuestionAnswersService.findQueryQuestionAnswerLive2d(
+          {
+            answerId: notification.answerId,
+            panelId: this.props.panelId
+          }
+        );
+
         this.updateAnswer(answer.id!, answer.data.x, answer.data.y);
-      break;
+        break;
     }
   }
 
@@ -509,12 +575,12 @@ class QueryPageLive2dComponent extends React.Component<Props, State> {
    */
   private onWindowResize = () => {
     this.recalculateChartSize();
-  }
+  };
 }
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -525,12 +591,15 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: React.Dispatch<actions.AppAction>) {
   return {};
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(QueryPageLive2dComponent);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(QueryPageLive2dComponent);

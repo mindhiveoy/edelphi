@@ -16,72 +16,66 @@ const config: any = {
  * Component props
  */
 interface Props {
-  accessToken?: AccessToken,
-  onAccessTokenUpdate: (accessToken: AccessToken) => void
-};
+  accessToken?: AccessToken;
+  onAccessTokenUpdate: (accessToken: AccessToken) => void;
+}
 
 /**
  * Component state
  */
 interface State {
-  error?: Error
+  error?: Error;
 }
 
 /**
  * Component for keeping authentication token fresh
  */
 class AccessTokenRefresh extends React.Component<Props, State> {
-
   private keycloak: KeycloakInstance;
   private timer?: any;
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
     super(props);
     this.keycloak = Keycloak(config);
-    this.state = { };
+    this.state = {};
   }
 
   /**
    * Component did mount life-cycle event
    */
   public componentDidMount = async () => {
-    const auth = await this.keycloakInit();
+    try {
+      const auth = await this.keycloakInit();
 
-    if (!auth) {
-      window.location.reload();
-    } else {
-      const { token, tokenParsed } = this.keycloak;
+      if (!auth) {
+        window.location.reload();
+      } else {
+        const { token, tokenParsed } = this.keycloak;
 
-      if (tokenParsed && tokenParsed.sub && token) {
-        this.props.onAccessTokenUpdate({
-          token: token,
-          userId: tokenParsed.sub
-        });
+        if (tokenParsed && tokenParsed.sub && token) {
+          this.props.onAccessTokenUpdate({
+            token,
+            userId: tokenParsed.sub
+          });
+        }
+
+        await this.refreshAccessToken();
+
+        this.timer = setInterval(async () => {
+          await this.refreshAccessToken();
+        }, 1000 * 60);
       }
-      
-      this.refreshAccessToken();
-
-      this.timer = setInterval(() => {
-        this.refreshAccessToken();
-      }, 1000 * 60);
-    };
-  }
-
-  /**
-   * Initializes Keycloak client
-   */
-  private keycloakInit = () => {
-    return new Promise((resolve) => {
-      this.keycloak.init({ onLoad: "login-required" }).success((auth) => {
-        resolve(auth);
-      });
-    });
-  }
+    } catch (error) {
+      // tslint:disable-next-line: no-console
+      console.error(error);
+      // TODO error diagnostics
+    }
+  };
 
   /**
    * Component will unmount life-cycle event
@@ -97,11 +91,27 @@ class AccessTokenRefresh extends React.Component<Props, State> {
    */
   public render() {
     if (this.state.error) {
-      return <ErrorDialog error={ this.state.error } onClose={ () => this.setState({ error: undefined }) } /> 
+      return (
+        <ErrorDialog
+          error={this.state.error}
+          onClose={() => this.setState({ error: undefined })}
+        />
+      );
     }
 
     return this.props.accessToken ? this.props.children : null;
   }
+
+  /**
+   * Initializes Keycloak client
+   */
+  private keycloakInit = () => {
+    return new Promise(resolve => {
+      this.keycloak.init({ onLoad: "login-required" }).success(auth => {
+        resolve(auth);
+      });
+    });
+  };
 
   /**
    * Refreshes access token
@@ -114,7 +124,7 @@ class AccessTokenRefresh extends React.Component<Props, State> {
 
         if (tokenParsed && tokenParsed.sub && token) {
           this.props.onAccessTokenUpdate({
-            token: token,
+            token,
             userId: tokenParsed.sub
           });
         }
@@ -125,12 +135,11 @@ class AccessTokenRefresh extends React.Component<Props, State> {
       });
     }
   }
-
 }
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -140,13 +149,14 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: React.Dispatch<actions.AppAction>) {
   return {
-    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+    onAccessTokenUpdate: (accessToken: AccessToken) =>
+      dispatch(actions.accessTokenUpdate(accessToken))
   };
 }
 

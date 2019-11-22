@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Redirect } from "react-router-dom";
-import HeaderBackground from "../../gfx/header_background.png";
+import HeaderBackground from "../../assets/images/header_background.png";
 import "../../styles/generic.scss";
 import {
   SemanticShorthandCollection,
@@ -9,6 +9,7 @@ import {
 import strings from "../../localization/strings";
 import { Panel, User } from "../../generated/client";
 import { CircularProgress, Container, Grid, Box } from "@material-ui/core";
+import styled from "@emotion/styled";
 
 interface Props {
   redirectTo?: string;
@@ -17,6 +18,13 @@ interface Props {
   loggedUser?: User;
   breadcrumbs: SemanticShorthandCollection<BreadcrumbSectionProps>;
 }
+
+const PageArea = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+`;
 
 /**
  * Generic layout for panel admin
@@ -36,10 +44,10 @@ class PanelLayout extends React.Component<Props> {
     }
 
     return (
-      <div>
+      <PageArea>
         {this.renderHeader()}
         <Container>{this.props.children}</Container>
-      </div>
+      </PageArea>
     );
   }
 

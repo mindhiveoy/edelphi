@@ -1,7 +1,7 @@
 import React from "react";
 import PanelLayout from "../../components/generic/panel-layout";
 import api from "../../api/api";
-import { AccessToken, StoreState } from "../../types";
+import { StoreState, WithAccessToken } from "../../types";
 import { User, Panel } from "../../generated/client";
 import { SemanticShorthandCollection } from "semantic-ui-react/dist/commonjs/generic";
 import { BreadcrumbSectionProps } from "semantic-ui-react";
@@ -11,9 +11,9 @@ import { Grid } from "@material-ui/core";
 import DocumentsContainer from "../../components/panel/documents";
 import QueriesContainer from "../../components/panel/queries";
 import BulletinsContainer from "../../components/panel/bulletins";
+import { withRouter, RouteComponentProps } from "react-router";
 
 interface PanelPageProps {
-  accessToken: AccessToken;
   panelSlug: string;
   querySlug: string;
 }
@@ -24,34 +24,22 @@ interface State {
   panel?: Panel;
 }
 
-class PanelPage extends React.Component<PanelPageProps, State> {
+class PanelPage extends React.Component<
+  PanelPageProps & WithAccessToken,
+  State
+> {
   public state: State = {
     loading: true
   };
 
   public componentDidMount = async () => {
-    const panels = await api
-      .getPanelsService(this.props.accessToken.token)
-      .listPanels({
-        urlName: this.props.panelSlug
-      });
+    await this.loadData();
+  };
 
-    const panel = panels.length ? panels[0] : undefined;
-    if (!panel || !panel.id) {
-      throw new Error("Could not find panel");
+  public componentDidUpdate = async (prevProps: WithAccessToken) => {
+    if (prevProps.accessToken !== this.props.accessToken) {
+      await this.loadData;
     }
-
-    const loggedUser = await api
-      .getUsersService(this.props.accessToken.token)
-      .findUser({
-        userId: this.props.accessToken.userId
-      });
-
-    this.setState({
-      loading: false,
-      panel,
-      loggedUser
-    });
   };
 
   public render() {
@@ -87,12 +75,42 @@ class PanelPage extends React.Component<PanelPageProps, State> {
       </PanelLayout>
     );
   }
-}
 
-function mapStateToProps(state: StoreState) {
-  return {
-    accessToken: state.accessToken as AccessToken
+  private loadData = async () => {
+    const { accessToken } = this.props;
+    if (!(accessToken && accessToken.token)) {
+      return;
+    }
+    const token = accessToken.token;
+
+    const panels = await api.getPanelsService(token).listPanels({
+      urlName: this.props.panelSlug
+    });
+
+    const panel = panels.length ? panels[0] : undefined;
+    if (!panel || !panel.id) {
+      throw new Error("Could not find panel");
+    }
+
+    const loggedUser = await api.getUsersService(token).findUser({
+      userId: accessToken.userId
+    });
+
+    this.setState({
+      loading: false,
+      panel,
+      loggedUser
+    });
   };
 }
 
-export default connect(mapStateToProps)(PanelPage);
+function mapStateToProps(state: StoreState, ownProps: PanelPageProps) {
+  return {
+    ...ownProps,
+    accessToken: state.accessToken
+  };
+}
+
+export default withRouter<RouteComponentProps<any>, any>(
+  connect(mapStateToProps)(PanelPage)
+);

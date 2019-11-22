@@ -14,14 +14,7 @@
 
 import * as runtime from "../runtime";
 import { MOCK_API, getMockApiFile } from "../../../debug";
-import {
-  ErrorResponse,
-  ErrorResponseFromJSON,
-  ErrorResponseToJSON,
-  Panel,
-  PanelFromJSON,
-  PanelToJSON
-} from "../models";
+import { Panel, PanelFromJSON } from "../models";
 
 export interface FindPanelRequest {
   panelId: number;
