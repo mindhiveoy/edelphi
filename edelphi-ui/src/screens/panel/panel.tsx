@@ -120,6 +120,11 @@ class PanelPage extends React.Component<
   };
 }
 
+/**
+ * Redux mapper for mapping store state to component props
+ *
+ * @param state store state
+ */
 function mapStateToProps(state: StoreState) {
   return {
     accessToken: state.accessToken as AccessToken
