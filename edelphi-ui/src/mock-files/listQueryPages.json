@@ -9,5 +9,16 @@
       "discussionVisible": false,
       "categories": []
     }
+  },
+  {
+    "id": 18577,
+    "pageNumber": 1,
+    "title": "Skaala 1d",
+    "type": "THESIS_SCALE_1D",
+    "commentOptions": {
+      "commentable": true,
+      "discussionVisible": true,
+      "categories": []
+    }
   }
 ]

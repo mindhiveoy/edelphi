@@ -2,109 +2,167 @@ import * as React from "react";
 import * as actions from "../../actions";
 import { StoreState, PageChangeEvent } from "../../types";
 import { connect, DispatchProp } from "react-redux";
-import {
-  Grid,
-  Button,
-  Popup,
-  List,
-  Segment,
-  Dimmer,
-  Loader,
-  Icon
-} from "semantic-ui-react";
+import { Segment, Dimmer, Loader } from "semantic-ui-react";
 import strings from "../../localization/strings";
-import {
-  QueryState,
-  QueryPage,
-  Panel,
-  QueryPagesApi,
-  PanelsApi
-} from "../../generated/client";
-import api from "../../api/api";
+import { QueryState, QueryPage, Panel, Query } from "../../generated/client";
 import { AccessToken } from "../../types/index";
 import ErrorDialog from "../error-dialog";
+import styled from "@emotion/styled";
+import Grid from "@material-ui/core/Grid";
+import Button from "@material-ui/core/Button";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import { withWidth, Paper } from "@material-ui/core";
+import Grow from "@material-ui/core/Grow";
+import ArrowUpIcon from "@material-ui/icons/ArrowDropUp";
+import { isWidthUp, WithWidth } from "@material-ui/core/withWidth";
+import Popper from "@material-ui/core/Popper";
+import ClickAwayListener from "@material-ui/core/ClickAwayListener";
+import Typography from "@material-ui/core/Typography";
+import { withRouter, RouteComponentProps } from "react-router";
+import { QueryRouteParams } from "../../screens/panel/query";
+import { Link } from "react-router-dom";
 
-declare const JSONUtils: any;
-
+const PICKMENU_ID = "pick-page-menu";
 /**
  * Interface representing component properties
  */
-interface Props extends DispatchProp<any> {
+interface Props {
   accessToken: AccessToken;
-  panelId: number;
-  queryId: number;
-  pageId: number;
+  pageNo: number;
+  panel: Panel;
+  query: Query;
+  pages: QueryPage[];
   queryState: QueryState;
   queryValidationMessage: string | null;
   onPageChange: (event: PageChangeEvent) => void;
   queryValidationMessageUpdate: (queryValidationMessage: string | null) => void;
 }
 
+const NavigationPanel = styled(Grid)`
+  margin-top: 10px;
+  border-top: 1px solid #000;
+  padding-top: 16px;
+`;
+
+// eslint-disable-next-line
+const NavigationCell = styled(({ mediumAlign, ...props }) => (
+  <Grid {...props} />
+))`
+  text-align: ${props =>
+    isWidthUp("sm", props.width) ? props.mediumAlign : "center"};
+`;
+
+const ValidationMessage = styled.p`
+  color: red;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
+`;
+
+const PickPageButton = styled(Button)`
+  margin: 0;
+  padding-top: 0;
+  text-align: center;
+  margin-bottom: 5px;
+`;
+
+const PickIcon = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const StyledListItem = styled(ListItem)`
+  ":hover": {
+    background-color: rgba(192, 192, 192, 0.7);
+  }
+  padding-left: 0;
+`;
+
+const StyledListItemText = styled(ListItemText)`
+  text-decoration: none;
+
+  min-width: ${window && Math.min(window.innerWidth - 20, 400)}px;
+  display: inline-block;
+  margin-left: 10px;
+  margin-right: 10px;
+`;
+
+const StyledPaper = styled(Paper)`
+  padding: 16px;
+  background-color: white;
+`;
+
+const QueryAnchor = styled(Link)`
+  display: flex;
+  flex-direction: row;
+  text-decoration: none;
+  color: blue;
+  ':visited':blue ;
+`;
+
+// TODO text color from theme
+const PageNoDiv = styled(Typography)`
+  width: 1rem;
+  padding-left: 4px;
+  text-align: left;
+  color: black;
+  ':visited':black ;
+  margin-top: 4px;
+  margin-bottom: 4px;
+`;
 /**
  * Interface representing component state
  */
 interface State {
-  loading: boolean;
+  // loading: boolean;
   nextSaving: boolean;
   previousSaving: boolean;
   pagesOpen: boolean;
-  pages: QueryPage[];
   error?: Error;
-  panel?: Panel;
+  anchorEl: any;
+  /**
+   * True when query pick up menu is open
+   */
+  pagePickerOpen: boolean;
 }
 
 /**
  * React component for query navigation
  */
-class QueryNavigation extends React.Component<Props, State> {
+class QueryNavigation extends React.Component<
+  Props & DispatchProp<any> & WithWidth & RouteComponentProps<QueryRouteParams>,
+  State
+> {
   public state: State = {
-    loading: true,
+    // loading: true,
     nextSaving: false,
     previousSaving: false,
-    pages: [],
-    pagesOpen: false
+    pagesOpen: false,
+    pagePickerOpen: false,
+    anchorEl: null
   };
-
-  // /**
-  //  * Component will mount life-cycle event
-  //  */
-  // public componentWillMount() {
-  //   (document as any).addEventListener("react-command", this.onReactCommand);
-  // }
-
-  // /**
-  //  * Component will unmount life-cycle event
-  //  */
-  // public async componentWillUnmount() {
-  //   (document as any).removeEventListener("react-command", this.onReactCommand);
-  // }
-
-  /**
-   * Component did mount life-cycle event
-   */
-  public async componentDidMount() {
-    await this.loadData();
-  }
-
-  // /**
-  //  * Component did update life-cycle event
-  //  */
-  // public async componentDidUpdate(oldProps: Props) {
-  //   if (this.props.accessToken !== oldProps.accessToken) {
-  //     await this.loadData();
-  //   }
-  // }
 
   /**
    * Render edit pest view
    */
   public render() {
-    const { error, previousSaving, nextSaving } = this.state;
+    const { error, previousSaving, nextSaving, anchorEl } = this.state;
     if (error) {
       return <ErrorDialog error={error} onClose={this.handleCloseError} />;
     }
+    const {
+      queryState,
+      queryValidationMessage,
+      width,
+      pages,
+      pageNo
+    } = this.props;
 
-    if (this.state.loading) {
+    // TODO Separate loader component
+    if (!pages) {
       return (
         <Segment style={{ minHeight: "200px" }}>
           <Dimmer inverted active>
@@ -113,16 +171,13 @@ class QueryNavigation extends React.Component<Props, State> {
         </Segment>
       );
     }
-
-    const currentPage = this.getCurrentPage();
-    const nextPage = this.getNextPage();
-    const previousPage = this.getPreviousPage();
+    const currentPage = this.getCurrentPage(pageNo);
+    const nextPage = this.getNextPage(pageNo);
+    const previousPage = this.getPreviousPage(pageNo);
 
     if (!currentPage) {
       return null;
     }
-
-    const { queryState, queryValidationMessage } = this.props;
 
     const nextDisabled =
       queryState !== "ACTIVE" ||
@@ -133,96 +188,105 @@ class QueryNavigation extends React.Component<Props, State> {
     const skipDisabled = !nextPage || previousSaving || nextSaving;
 
     return (
-      <Grid style={{ marginTop: "10px", borderTop: "1px solid #000" }}>
-        {this.renderDisabledMessage()}
-        <Grid.Row>
-          <Grid.Column width={5} only={"computer"}></Grid.Column>
-          <Grid.Column computer={6} mobile={16}>
-            <Grid>
-              <Grid.Row>
-                <Grid.Column width={6} style={{ textAlign: "center" }}>
-                  <Button
-                    disabled={previousDisabled}
-                    color={"blue"}
-                    onClick={this.onPreviousClick}
-                  >
-                    {strings.panel.query.previous}
-                    {this.state.previousSaving && (
-                      <Loader
-                        style={{ marginLeft: "10px" }}
-                        active={true}
-                        inline
-                        size="mini"
-                        inverted
-                      />
-                    )}
-                  </Button>
-                </Grid.Column>
-                <Grid.Column width={4} style={{ textAlign: "center" }}>
-                  <Popup
-                    position="top center"
-                    size="large"
-                    closeOnDocumentClick={true}
-                    trigger={
-                      <div style={{ textAlign: "center", marginBottom: "5px" }}>
-                        {" "}
-                        <Icon
-                          size="large"
-                          color="blue"
-                          name="triangle up"
-                        />{" "}
-                        <div> </div>{" "}
-                        {`${currentPage.pageNumber + 1} / ${
-                          this.state.pages.length
-                        }`}{" "}
-                      </div>
-                    }
-                    on="click"
-                    open={this.state.pagesOpen}
-                    onClose={() => this.setState({ pagesOpen: false })}
-                    onOpen={() => this.setState({ pagesOpen: true })}
-                  >
-                    <p> {strings.panel.query.quickNavigationTitle} </p>
-                    {this.renderPages()}
-                  </Popup>
-                </Grid.Column>
-                <Grid.Column width={6} style={{ textAlign: "center" }}>
-                  <Button
-                    disabled={nextDisabled}
-                    color={"blue"}
-                    onClick={this.onNextClick}
-                  >
-                    {nextPage
-                      ? strings.panel.query.next
-                      : strings.panel.query.save}
-                    {this.state.nextSaving && (
-                      <Loader
-                        style={{ marginLeft: "10px" }}
-                        active={true}
-                        inline
-                        size="mini"
-                        inverted
-                      />
-                    )}
-                  </Button>
-                </Grid.Column>
-              </Grid.Row>
-              <Grid.Row>
-                <Grid.Column width={16} style={{ textAlign: "center" }}>
-                  <Button
-                    disabled={skipDisabled}
-                    color={"blue"}
-                    onClick={this.onSkipClick}
-                  >
-                    {strings.panel.query.skip}
-                  </Button>
-                </Grid.Column>
-              </Grid.Row>
-            </Grid>
-          </Grid.Column>
-          <Grid.Column width={5} only={"computer"}></Grid.Column>
-        </Grid.Row>
-      </Grid>
+      <NavigationPanel container>
+        <NavigationCell
+          width={width}
+          mediumAlign="right"
+          item
+          xs={3}
+          sm={4}
+          md={5}
+        >
+          <Button
+            disabled={previousDisabled}
+            variant="contained"
+            color="primary"
+            onClick={this.onPreviousClick}
+          >
+            {strings.panel.query.previous}
+            {previousSaving && (
+              <Loader
+                style={{ marginLeft: "10px" }}
+                active
+                inline
+                size="mini"
+                inverted
+              />
+            )}
+          </Button>
+        </NavigationCell>
+        <NavigationCell
+          width={width}
+          mediumAlign="center"
+          item
+          xs={6}
+          sm={4}
+          md={2}
+        >
+          <PickPageButton
+            onClick={event =>
+              this.setState({
+                anchorEl: event.currentTarget
+              })
+            }
+            aria-controls={PICKMENU_ID}
+            aria-haspopup="true"
+            aria-describedby={PICKMENU_ID}
+          >
+            <PickIcon>
+              <ArrowUpIcon />
+              {pageNo + 1} / {pages.length}
+            </PickIcon>
+          </PickPageButton>
+
+          <Popper
+            id={PICKMENU_ID}
+            open={anchorEl !== null}
+            anchorEl={anchorEl}
+            transition
+            placement="top"
+          >
+            {({ TransitionProps }) => (
+              <Grow in={anchorEl !== null} {...TransitionProps} timeout={350}>
+                <ClickAwayListener onClickAway={this.handlePagePickerClose}>
+                  {this.renderPagePickMenu()}
+                </ClickAwayListener>
+              </Grow>
+            )}
+          </Popper>
+        </NavigationCell>
+        <NavigationCell
+          width={width}
+          mediumAlign="left"
+          item
+          xs={3}
+          sm={4}
+          md={5}
+        >
+          <Button
+            disabled={nextDisabled}
+            variant="contained"
+            color="primary"
+            onClick={this.onNextClick}
+          >
+            {nextPage ? strings.panel.query.next : strings.panel.query.save}
+            {this.state.nextSaving && (
+              <Loader
+                style={{ marginLeft: "10px" }}
+                active={true}
+                inline
+                size="mini"
+                inverted
+              />
+            )}
+          </Button>
+        </NavigationCell>
+        <NavigationCell width={width} mediumAlign="center" item xs={12}>
+          <Button disabled={skipDisabled} onClick={this.onSkipClick}>
+            {strings.panel.query.skip}
+          </Button>
+        </NavigationCell>
+      </NavigationPanel>
     );
   }
 
@@ -231,6 +295,8 @@ class QueryNavigation extends React.Component<Props, State> {
       error: undefined
     });
   };
+
+  // TODO Disabled message
   /**
    * Renders disabled message
    */
@@ -240,52 +306,56 @@ class QueryNavigation extends React.Component<Props, State> {
     }
 
     return (
-      <Grid.Row>
-        <Grid.Column width={16}>
-          <p
-            style={{
-              color: "red",
-              textAlign: "center",
-              fontSize: "16px",
-              fontWeight: "bold"
-            }}
-          >
-            {this.props.queryValidationMessage}
-          </p>
-        </Grid.Column>
-      </Grid.Row>
+      <Grid item xs={12}>
+        <ValidationMessage>
+          {this.props.queryValidationMessage}
+        </ValidationMessage>
+      </Grid>
     );
   };
 
+  private handlePagePickerClose = () => {
+    this.setState({
+      anchorEl: null
+    });
+  };
+
   /**
-   * Renders pages list
+   * Renders page picker menu shown, when the user wants to jump
+   * between pages without saving.
    */
-  private renderPages = () => {
+  private renderPagePickMenu = () => {
+    const {
+      pages,
+      location: { pathname }
+    } = this.props;
     return (
-      <List as="ol" style={{ marginBottom: "10px" }}>
-        {this.state.pages.map((page: QueryPage) => {
-          return (
-            <List.Item as="li" key={`list-${page.id}`}>
-              <a
+      <StyledPaper elevation={6}>
+        <Typography variant="h2">
+          {strings.panel.query.quickNavigationTitle}
+        </Typography>
+        <List>
+          {pages.map(page => (
+            <StyledListItem button key={`list-${page.id}`}>
+              <QueryAnchor
                 key={`link-${page.id}`}
-                style={{
-                  minWidth: "400px",
-                  display: "inline-block",
-                  marginLeft: "10px"
-                }}
-                href={`?page=${page.pageNumber}`}
+                to={`${pathname}?page=${page.pageNumber}`}
+                onClick={this.handlePagePickerClose}
               >
-                {page.title}
-              </a>
-            </List.Item>
-          );
-        })}
-      </List>
+                <PageNoDiv variant="body1">{page.pageNumber + 1}</PageNoDiv>
+                <StyledListItemText primary={page.title} />
+              </QueryAnchor>
+            </StyledListItem>
+          ))}
+        </List>
+      </StyledPaper>
     );
   };
 
   /**
    * Locates legacy form
+   *
+   * TODO Find out is this necessary anymore
    */
   private getLegacyForm = () => {
     const queryBlock = document.getElementById("panelQueryBlock");
@@ -303,35 +373,35 @@ class QueryNavigation extends React.Component<Props, State> {
    * Saves legacy form
    */
   private saveLegacyForm = (finish: boolean) => {
-    const form = this.getLegacyForm();
-    if (!form) {
-      throw new Error("Failed to locate legacy form");
-    }
-
-    return new Promise((resolve, reject) => {
-      JSONUtils.sendForm(form, {
-        onSuccess(jsonResponse: any) {
-          if (finish) {
-            JSONUtils.request("/queries/finishquery.json", {
-              parameters: {
-                replyId: form.queryReplyId.value
-              },
-              onSuccess(response: any) {
-                resolve(response);
-              },
-              onFailure(response: any) {
-                reject(response);
-              }
-            });
-          } else {
-            resolve(jsonResponse);
-          }
-        },
-        onFailure(jsonResponse: any) {
-          reject(jsonResponse);
-        }
-      });
-    });
+    // TODO find out is this needed anymore
+    // const form = this.getLegacyForm();
+    // if (!form) {
+    //   throw new Error("Failed to locate legacy form");
+    // }
+    // return new Promise((resolve, reject) => {
+    //   JSONUtils.sendForm(form, {
+    //     onSuccess(jsonResponse: any) {
+    //       if (finish) {
+    //         JSONUtils.request("/queries/finishquery.json", {
+    //           parameters: {
+    //             replyId: form.queryReplyId.value
+    //           },
+    //           onSuccess(response: any) {
+    //             resolve(response);
+    //           },
+    //           onFailure(response: any) {
+    //             reject(response);
+    //           }
+    //         });
+    //       } else {
+    //         resolve(jsonResponse);
+    //       }
+    //     },
+    //     onFailure(jsonResponse: any) {
+    //       reject(jsonResponse);
+    //     }
+    //   });
+    // });
   };
 
   /**
@@ -342,19 +412,31 @@ class QueryNavigation extends React.Component<Props, State> {
     save: boolean,
     finish: boolean
   ) => {
-    await this.props.onPageChange({});
+    const { onPageChange, panel } = this.props;
+
+    onPageChange && onPageChange({});
 
     if (save) {
+      // TODO verify the need for this
       await this.saveLegacyForm(finish);
     }
 
     await this.promiseAwait(500);
 
     if (page) {
-      window.location.href = `?page=${page.pageNumber}`;
-    } else if (finish && this.state.panel) {
-      window.location.href = `/${this.state.panel.urlName}`;
+      this.props.history.push(
+        this.props.location.pathname + `?page=${page.pageNumber}`
+      );
+    } else if (finish && panel) {
+      this.props.history.push(
+        this.props.location.pathname + `/${panel.urlName}`
+      );
     }
+
+    this.setState({
+      previousSaving: false,
+      nextSaving: false
+    });
   };
 
   /**
@@ -362,10 +444,8 @@ class QueryNavigation extends React.Component<Props, State> {
    *
    * @returns current page or null if not found
    */
-  private getCurrentPage = () => {
-    return this.state.pages.find(page => {
-      return page.id === this.props.pageId;
-    });
+  private getCurrentPage = (pageNo: number) => {
+    return this.getPageByNo(pageNo);
   };
 
   /**
@@ -373,16 +453,13 @@ class QueryNavigation extends React.Component<Props, State> {
    *
    * @returns previous page or null if not available
    */
-  private getPreviousPage = () => {
-    const currentIndex = this.state.pages.findIndex(page => {
-      return page.id === this.props.pageId;
+  private getPreviousPage = (pageNo: number) => {
+    const { pages } = this.props;
+    const currentIndex = pages.findIndex(page => {
+      return page.pageNumber === pageNo;
     });
 
-    if (currentIndex > 0) {
-      return this.state.pages[currentIndex - 1];
-    }
-
-    return null;
+    return currentIndex > 0 ? pages[currentIndex - 1] : null;
   };
 
   /**
@@ -390,54 +467,16 @@ class QueryNavigation extends React.Component<Props, State> {
    *
    * @returns next page or null if not available
    */
-  private getNextPage = () => {
-    const currentIndex = this.state.pages.findIndex(page => {
-      return page.id === this.props.pageId;
+  private getNextPage = (pageNo: number) => {
+    const { pages } = this.props;
+    const currentIndex = pages.findIndex(page => {
+      return page.pageNumber === pageNo;
     });
 
-    if (currentIndex < this.state.pages.length - 1) {
-      return this.state.pages[currentIndex + 1];
+    if (currentIndex < pages.length - 1) {
+      return pages[currentIndex + 1];
     }
-
     return null;
-  };
-
-  /**
-   * Loads component data
-   */
-  private loadData = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-
-    this.setState({
-      loading: true
-    });
-    try {
-      const pages = await this.getQueryPagesService().listQueryPages({
-        includeHidden: false,
-        panelId: this.props.panelId,
-        queryId: this.props.queryId
-      });
-
-      const panel = await this.getPanelsService().findPanel({
-        panelId: this.props.panelId
-      });
-
-      console.log(JSON.stringify(panel, undefined, 2));
-
-      this.setState({
-        loading: false,
-        pages,
-        panel
-      });
-    } catch (error) {
-      // TODO sentry
-      this.setState({
-        loading: false,
-        error
-      });
-    }
   };
 
   /**
@@ -449,22 +488,10 @@ class QueryNavigation extends React.Component<Props, State> {
     });
   };
 
-  /**
-   * Returns query pages API
-   *
-   * @returns query pages API
-   */
-  private getQueryPagesService(): QueryPagesApi {
-    return api.getQueryPagesService(this.props.accessToken.token);
-  }
-
-  /**
-   * Returns panels API
-   *
-   * @returns panels API
-   */
-  private getPanelsService(): PanelsApi {
-    return api.getPanelsService(this.props.accessToken.token);
+  private getPageByNo(pageNo: number) {
+    return this.props.pages.find(page => {
+      return page.pageNumber === pageNo;
+    });
   }
 
   /**
@@ -482,7 +509,7 @@ class QueryNavigation extends React.Component<Props, State> {
       previousSaving: true
     });
 
-    const previousPage = this.getPreviousPage();
+    const previousPage = this.getPreviousPage(this.props.pageNo);
 
     await this.changePage(previousPage, true, false);
   };
@@ -502,7 +529,7 @@ class QueryNavigation extends React.Component<Props, State> {
       nextSaving: true
     });
 
-    const nextPage = this.getNextPage();
+    const nextPage = this.getNextPage(this.props.pageNo);
 
     await this.changePage(nextPage, true, !nextPage);
   };
@@ -518,25 +545,10 @@ class QueryNavigation extends React.Component<Props, State> {
     event.preventDefault();
     event.stopPropagation();
 
-    const nextPage = this.getNextPage();
+    const nextPage = this.getNextPage(this.props.pageNo);
 
     await this.changePage(nextPage, false, false);
   };
-
-  /**
-   * Event handler for react command events
-   *
-   * @param event event
-   */
-  // private onReactCommand = async (event: CommandEvent) => {
-  //   if (event.detail.command === "disable-query-next") {
-  //     this.props.queryValidationMessageUpdate(
-  //       event.detail.data.reason || strings.panel.query.noAnswer
-  //     );
-  //   } else if (event.detail.command === "enable-query-next") {
-  //     this.props.queryValidationMessageUpdate(null);
-  //   }
-  // };
 }
 
 /**
@@ -565,7 +577,8 @@ function mapDispatchToProps(dispatch: React.Dispatch<actions.AppAction>) {
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(QueryNavigation as any);
+export default withRouter(
+  withWidth()(
+    connect(mapStateToProps, mapDispatchToProps)(QueryNavigation as any) as any
+  ) as any
+) as any;

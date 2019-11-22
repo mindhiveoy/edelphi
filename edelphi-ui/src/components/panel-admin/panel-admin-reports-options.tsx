@@ -1,6 +1,6 @@
+/* eslint-disable */
 import * as React from "react";
-import * as actions from "../../actions";
-import * as _ from "lodash";
+import _ from "lodash";
 import strings from "../../localization/strings";
 import { StoreState } from "../../types";
 import { connect } from "react-redux";

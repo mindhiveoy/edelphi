@@ -11,7 +11,6 @@ import {
   UsersApi,
   ReportsApi
 } from "../generated/client";
-import { getMockApiFile, MOCK_API } from "../debug";
 
 /**
  * Helper class for constructing API instances

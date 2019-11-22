@@ -78,7 +78,7 @@ export class QueryCommentClass extends React.Component<Props, State> {
   /**
    * Component will mount life-cycle event
    */
-  public componentWillMount() {
+  public componentDidMount() {
     mqttConnection.subscribe(
       "queryquestioncomments",
       this.queryQuestionCommentsListener
@@ -487,7 +487,7 @@ export class QueryCommentClass extends React.Component<Props, State> {
   /**
    * Event handler for comment delete dialog confirm click
    */
-  private onCommentDeleteConfirm() {
+  private onCommentDeleteConfirm = async () => {
     if (!this.props.accessToken || !this.props.comment.id) {
       return;
     }
@@ -508,11 +508,16 @@ export class QueryCommentClass extends React.Component<Props, State> {
     const queryQuestionCommentsService = this.getQueryQuestionCommentsService(
       this.props.accessToken
     );
-    queryQuestionCommentsService.deleteQueryQuestionComment({
-      commentId: this.props.comment.id,
-      panelId: this.props.panelId
-    });
-  }
+    try {
+      await queryQuestionCommentsService.deleteQueryQuestionComment({
+        commentId: this.props.comment.id,
+        panelId: this.props.panelId
+      });
+    } catch (error) {
+      console.error(error);
+      // TODO error indication
+    }
+  };
 
   /**
    * Click handler edit comment save button
@@ -556,7 +561,9 @@ export class QueryCommentClass extends React.Component<Props, State> {
    *
    * @param event event
    */
-  private onNewCommentSaveClick(event: React.MouseEvent<HTMLElement>) {
+  private onNewCommentSaveClick = async (
+    event: React.MouseEvent<HTMLElement>
+  ) => {
     event.preventDefault();
 
     if (
@@ -580,18 +587,23 @@ export class QueryCommentClass extends React.Component<Props, State> {
     const queryQuestionCommentsService = this.getQueryQuestionCommentsService(
       this.props.accessToken
     );
-    queryQuestionCommentsService.createQueryQuestionComment({
-      queryQuestionComment: {
-        contents,
-        hidden: false,
-        parentId: this.props.comment.id,
-        queryPageId: this.props.pageId,
-        queryReplyId: this.props.queryReplyId,
-        categoryId
-      },
-      panelId: this.props.panelId
-    });
-  }
+    try {
+      await queryQuestionCommentsService.createQueryQuestionComment({
+        queryQuestionComment: {
+          contents,
+          hidden: false,
+          parentId: this.props.comment.id,
+          queryPageId: this.props.pageId,
+          queryReplyId: this.props.queryReplyId,
+          categoryId
+        },
+        panelId: this.props.panelId
+      });
+    } catch (error) {
+      console.error(error);
+      // TODO error indication
+    }
+  };
 
   /**
    * Click handler for delete link
@@ -611,7 +623,7 @@ export class QueryCommentClass extends React.Component<Props, State> {
    *
    * @param event event
    */
-  private onShowClick(event: React.MouseEvent<HTMLElement>) {
+  private onShowClick = async (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
 
     if (
@@ -629,7 +641,7 @@ export class QueryCommentClass extends React.Component<Props, State> {
     const queryQuestionCommentsService = this.getQueryQuestionCommentsService(
       this.props.accessToken
     );
-    queryQuestionCommentsService.updateQueryQuestionComment({
+    await queryQuestionCommentsService.updateQueryQuestionComment({
       queryQuestionComment: {
         ...this.props.comment,
         hidden: false
@@ -637,7 +649,7 @@ export class QueryCommentClass extends React.Component<Props, State> {
       panelId: this.props.panelId,
       commentId: this.props.comment.id
     });
-  }
+  };
 
   /**
    * Click handler for hide link
@@ -718,18 +730,6 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
-/**
- * Redux mapper for mapping component dispatches
- *
- * @param dispatch dispatch method
- */
-function mapDispatchToProps(dispatch: React.Dispatch<actions.AppAction>) {
-  return {};
-}
-
-const QueryComment = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(QueryCommentClass);
+const QueryComment = connect(mapStateToProps)(QueryCommentClass);
 
 export default QueryComment;
