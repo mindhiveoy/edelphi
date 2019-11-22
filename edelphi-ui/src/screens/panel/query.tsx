@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as actions from "../../actions";
+// import * as actions from "../../actions";
 import PanelLayout from "../../components/generic/panel-layout";
 import { User, Panel, Query } from "../../generated/client";
 import {
@@ -14,6 +14,9 @@ import { connect, DispatchProp } from "react-redux";
 import QueryNavigation from "../../components/panel/QueryNavigation";
 // import QueryComments from "../../components/panel/QueryComments";
 import { RouteComponentProps, withRouter } from "react-router";
+import { QueryPage } from "../../generated/client/models/QueryPage";
+import PageLayout from "../../components/panel/PageLayout";
+import * as queryString from "query-string";
 
 export interface QueryRouteParams {
   panelSlug: string;
@@ -39,6 +42,8 @@ interface State {
   loggedUser?: User;
   panel?: Panel;
   query?: Query;
+  pages?: QueryPage[];
+
   redirectTo?: string;
 }
 
@@ -85,6 +90,13 @@ class QueryScreen extends React.Component<Props, State> {
         throw new Error("Could not find query");
       }
 
+      const pages = await api.getQueryPagesService(token).listQueryPages({
+        includeHidden: false,
+        panelId: panel.id,
+        queryId: query.id
+      });
+
+      // TODO Move loggeduser into context
       const loggedUser = await api.getUsersService(token).findUser({
         userId: this.props.accessToken.userId
       });
@@ -93,6 +105,7 @@ class QueryScreen extends React.Component<Props, State> {
         loading: false,
         panel,
         query,
+        pages,
         loggedUser
       });
     } catch (error) {
@@ -107,7 +120,18 @@ class QueryScreen extends React.Component<Props, State> {
    * Component render method
    */
   public render() {
-    const { panel, query, loggedUser, error, loading, redirectTo } = this.state;
+    const {
+      panel,
+      query,
+      pages,
+      loggedUser,
+      error,
+      loading,
+      redirectTo
+    } = this.state;
+
+    // TODO make this more efficient
+    const pageNo = this.parsePageNo();
 
     if (!(panel && query && loggedUser)) {
       return null;
@@ -127,12 +151,7 @@ class QueryScreen extends React.Component<Props, State> {
       { key: "query", content: query.name, active: true }
     ];
 
-    const {
-      accessToken,
-      match: {
-        params: { panelSlug, querySlug }
-      }
-    } = this.props;
+    const { accessToken } = this.props;
 
     // TODO verify query.state !== defined
 
@@ -144,16 +163,19 @@ class QueryScreen extends React.Component<Props, State> {
         panel={panel}
         redirectTo={redirectTo}
       >
-        <div>
+        {/* <div>
           {panelSlug} / {querySlug}
-        </div>
+        </div> */}
+        <PageLayout panel={panel} query={query} pages={pages} pageNo={pageNo} />
         <QueryNavigation
           accessToken={accessToken}
           queryState={query.state!}
-          pageId={18575}
-          panelId={panel.id!}
-          queryId={query.id!}
+          pages={pages}
+          panel={panel}
+          query={query}
+          pageNo={pageNo}
           onPageChange={this.handlePageChange}
+          location={this.props.location}
         />
         {/*
         <QueryComments
@@ -170,8 +192,23 @@ class QueryScreen extends React.Component<Props, State> {
     );
   }
 
+  private parsePageNo = () => {
+    const queryParams = queryString.parse(this.props.location.search);
+
+    try {
+      return queryParams.page ? parseInt(queryParams.page as string, 0) : 0;
+    } catch (error) {
+      // tslint:disable-next-line: no-console
+      console.error(error);
+      // TODO page not found
+      return 0;
+    }
+  };
+
   private handlePageChange = (event: PageChangeEvent) => {
-    alert("Buum!");
+    // alert("Buum!");
+    // tslint:disable-next-line: no-console
+    console.debug(event);
   };
 
   private handleCloseError = () => this.setState({ error: undefined });
@@ -188,15 +225,4 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
-/**
- * Redux mapper for mapping component dispatches
- *
- * @param dispatch dispatch method
- */
-function mapDispatchToProps(dispatch: React.Dispatch<actions.AppAction>) {
-  return {};
-} // TODO remove this as obsole
-
-export default withRouter(
-  connect(mapStateToProps, mapDispatchToProps)(QueryScreen) as any
-);
+export default withRouter(connect(mapStateToProps)(QueryScreen) as any);

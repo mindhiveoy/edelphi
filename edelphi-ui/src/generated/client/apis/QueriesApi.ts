@@ -13,14 +13,7 @@
  */
 
 import * as runtime from "../runtime";
-import {
-  ErrorResponse,
-  ErrorResponseFromJSON,
-  ErrorResponseToJSON,
-  Query,
-  QueryFromJSON,
-  QueryToJSON
-} from "../models";
+import { Query, QueryFromJSON } from "../models";
 import { MOCK_API, getMockApiFile } from "../../../debug";
 
 export interface ListQueriesRequest {

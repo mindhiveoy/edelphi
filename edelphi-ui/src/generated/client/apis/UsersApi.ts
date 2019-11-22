@@ -13,14 +13,7 @@
  */
 
 import * as runtime from "../runtime";
-import {
-  ErrorResponse,
-  ErrorResponseFromJSON,
-  ErrorResponseToJSON,
-  User,
-  UserFromJSON,
-  UserToJSON
-} from "../models";
+import { User, UserFromJSON } from "../models";
 import { MOCK_API, getMockApiFile } from "../../../debug";
 
 export interface FindUserRequest {

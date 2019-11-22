@@ -15,14 +15,16 @@
     "object-literal-shorthand": true,
     "eofline": false,
     "no-empty-interface": false,
-    "no-unused-vars": true
+    "no-unused-vars": true,
+    "no-floating-promises": true,
+    "no-unused-expression": false
   },
   "linterOptions": {
     "exclude": [
-      "src/generated/*",
       "config/**/*.js",
       "node_modules/**/*.ts",
-      "coverage/lcov-report/*.js"
+      "coverage/lcov-report/*.js",
+      "jest.config.js"
     ]
   }
 }

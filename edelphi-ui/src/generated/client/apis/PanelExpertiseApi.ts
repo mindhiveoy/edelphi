@@ -14,18 +14,12 @@
 
 import * as runtime from "../runtime";
 import {
-  ErrorResponse,
-  ErrorResponseFromJSON,
-  ErrorResponseToJSON,
   PanelExpertiseClass,
   PanelExpertiseClassFromJSON,
-  PanelExpertiseClassToJSON,
   PanelExpertiseGroup,
   PanelExpertiseGroupFromJSON,
-  PanelExpertiseGroupToJSON,
   PanelInterestClass,
-  PanelInterestClassFromJSON,
-  PanelInterestClassToJSON
+  PanelInterestClassFromJSON
 } from "../models";
 
 export interface ListExpertiseClassesRequest {

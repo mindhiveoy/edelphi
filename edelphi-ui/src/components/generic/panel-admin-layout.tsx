@@ -1,6 +1,7 @@
+/* eslint-disable */
 import * as React from "react";
 import { Redirect } from "react-router-dom";
-import HeaderBackground from "../../gfx/header_background.png";
+import HeaderBackground from "../../assets/images/header_background.png";
 import "../../styles/generic.scss";
 import {
   Container,
@@ -109,7 +110,7 @@ class PanelAdminLayout extends React.Component<Props, State> {
 
     return (
       <h1 className="header-title">
-        <a className="root-link" href="/">
+        <a className="root-link" href="/" arie-label="">
           eDelphi.org
         </a>
         <a className="panel-link" href={"/" + this.props.panel.urlName}>
@@ -161,7 +162,7 @@ class PanelAdminLayout extends React.Component<Props, State> {
       <div>
         <a
           className={
-            selectedLanguage == "fi"
+            selectedLanguage === "fi"
               ? "header-locale-link header-locale-link-selected"
               : "header-locale-link"
           }
@@ -172,7 +173,7 @@ class PanelAdminLayout extends React.Component<Props, State> {
         </a>
         <a
           className={
-            selectedLanguage == "en"
+            selectedLanguage === "en"
               ? "header-locale-link header-locale-link-selected"
               : "header-locale-link"
           }
@@ -200,7 +201,6 @@ class PanelAdminLayout extends React.Component<Props, State> {
                   strings.generic.welcomeUser,
                   `${this.props.loggedUser.firstName} ${this.props.loggedUser.lastName}`
                 )}
-                 
               </div>
               <div>
                 <a href="/profile.page"> {strings.generic.profileLink} </a>

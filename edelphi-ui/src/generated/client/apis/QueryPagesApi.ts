@@ -14,12 +14,8 @@
 
 import * as runtime from "../runtime";
 import {
-  ErrorResponse,
-  ErrorResponseFromJSON,
-  ErrorResponseToJSON,
   QueryPage,
   QueryPageFromJSON,
-  QueryPageToJSON,
   QueryPageLive2d,
   QueryPageLive2dFromJSON,
   QueryPageLive2dToJSON,
@@ -27,7 +23,6 @@ import {
   QueryPageTextFromJSON,
   QueryPageTextToJSON
 } from "../models";
-import { MOCK_API, getMockApiFile } from "../../../debug";
 
 export interface FindQueryPageLive2dRequest {
   panelId: number;
@@ -254,9 +249,9 @@ export class QueryPagesApi extends runtime.BaseAPI {
   async listQueryPages(
     requestParameters: ListQueryPagesRequest
   ): Promise<Array<QueryPage>> {
-    if (MOCK_API) {
-      return await getMockApiFile("listQueryPages");
-    }
+    // if (MOCK_API) {
+    //   return await getMockApiFile("listQueryPages");
+    // }
     const response = await this.listQueryPagesRaw(requestParameters);
     return await response.value();
   }
